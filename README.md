@@ -25,9 +25,13 @@
 
 
 ## To Do
-* [DONE]Show photos + control to next or prev photo
+* [DONE] Show photos + control to next or prev photo
 * [DONE] filter non img file 
-* tag photo ( + load tag list)
+* [DONE] tag photo + copy photo to target folder
+* [DONE] FOLDER path : windows : \  , mac & linux : /
+* function : add & modify tag list 
+* load tag list
 * store tag status ( into file? memory?)
 * copy files to target folder
+* Detect source dir file change
 * layout
