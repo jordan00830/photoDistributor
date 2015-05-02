@@ -29,8 +29,8 @@
 * [DONE] filter non img file 
 * [DONE] tag photo + copy photo to target folder
 * [DONE] FOLDER path : windows : \  , mac & linux : /
-* function : add & modify tag list 
-* load tag list
+* [Done]function : add & modify tag list (load tag list from file)
+* [Done]lick tagBtn to copy, click again to cancel
 * store tag status ( into file? memory?)
 * copy files to target folder
 * Detect source dir file change
