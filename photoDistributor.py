@@ -207,18 +207,14 @@ class PhotoCtrl(wx.App):
         for tagBtn in self.tagListSizer.GetChildren():
             tagBtn.GetWindow().SetValue(False)
 
-
         # only handle changed photo index
         if self.currentPhotoIdx in self.tagStatus:
             print self.tagStatus
             for btnID, isPress in self.tagStatus[self.currentPhotoIdx].items():
                 self.tagListSizer.GetContainingWindow().FindWindowById(long(btnID)).SetValue(isPress)
-        
 
-        #self.panel.SetSizer(self.mainSizer)
-        #self.mainSizer.Fit(self.frame)
-        self.panel.Layout()
-
+        # Refresh layout
+        self.panel.Refresh()
 
     def getAllFiles(self,rootPath):
         self.allPhotos = []
