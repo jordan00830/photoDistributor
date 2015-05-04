@@ -18,8 +18,8 @@ class PhotoCtrl(wx.App):
         wx.App.__init__(self, redirect, filename)
         self.frame = wx.Frame(None, title='Photo Distributor')
         self.panel = wx.Panel(self.frame)
-        #self.tagListPanel = wx.Panel(self.frame)
-        self.PhotoMaxSize = 400
+
+        self.PhotoMaxSize = 500
         self.photoTargetPath = None
         self.allPhotos = []
         self.currentPhotoIdx = 0
@@ -33,66 +33,79 @@ class PhotoCtrl(wx.App):
  
     def createComponents(self):
         # ============== Components & event ===================
-        instructions = 'Browse for an image'
         
         img = wx.EmptyImage(self.PhotoMaxSize,self.PhotoMaxSize)
-        self.imageCtrl = wx.StaticBitmap(self.panel, wx.ID_ANY, 
+        self.photoContainer = wx.StaticBitmap(self.panel, wx.ID_ANY, 
                                          wx.BitmapFromImage(img))
- 
-        self.instructLbl = wx.StaticText(self.panel, label=instructions)
- 
+  
         # browse folder btn & path input bar
         self.browseFolderBtn = wx.Button(self.panel, label=unicode('開啟照片資料夾'))
         self.browseFolderBtn.Bind(wx.EVT_BUTTON, self.onBrowseFolder)
-        self.photoTxt = wx.TextCtrl(self.panel, style=wx.TE_READONLY , size=(600,-1))
+        self.photoTxt = wx.TextCtrl(self.panel, style=wx.TE_READONLY , size=(700,-1))
 
         # taget folder btn & path input bar
         self.targetFolderBtn = wx.Button(self.panel, label=unicode('設定目標資料夾'))
         self.targetFolderBtn.Bind(wx.EVT_BUTTON, self.onSetTargetFolder)
-        self.targetPhotoTxt = wx.TextCtrl(self.panel, style=wx.TE_READONLY , size=(600,-1))
+        self.targetPhotoTxt = wx.TextCtrl(self.panel, style=wx.TE_READONLY , size=(700,-1))
 
         # load tag list btn
         self.loadTagListBtn = wx.Button(self.panel, label=unicode('設定標籤清單檔案'))
         self.loadTagListBtn.Bind(wx.EVT_BUTTON, self.onSetTagListFile)
-        self.tagListSettingTxt = wx.TextCtrl(self.panel, style=wx.TE_READONLY, size = (600,-1))
+        self.tagListSettingTxt = wx.TextCtrl(self.panel, style=wx.TE_READONLY, size = (700,-1))
+
+        # current photo path
+        self.currentPhotoPathHint = wx.StaticText(self.panel, label=unicode('原始檔路徑: '))
+        self.currentPhotoPathContent = wx.StaticText(self.panel, label=unicode('(請設定照片資料夾)'))
 
         # prev photo btn
-        self.prevPhotoBtn = wx.Button(self.panel, label= unicode('前一張'))
+        self.prevPhotoBtn = wx.Button(self.panel, label= unicode('<< 前一張'),  size = (200,-1))
         self.prevPhotoBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoChange(EnumPhotoCtrl.PREV))
 
         # next photo btn
-        self.nextPhotoBtn = wx.Button(self.panel, label= unicode('下一張'))
+        self.nextPhotoBtn = wx.Button(self.panel, label= unicode('下一張 >>'), size = (200,-1))
         self.nextPhotoBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoChange(EnumPhotoCtrl.NEXT))
 
     def drawLayout(self):
         #=================== Layout ============================
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer3 = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer4 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.mainSizer.Add(wx.StaticLine(self.panel, wx.ID_ANY),
-                           0, wx.ALL|wx.EXPAND, 5)
-        self.mainSizer.Add(self.instructLbl, 0, wx.ALL, 5)
+        self.settingSizer = wx.BoxSizer(wx.VERTICAL)
         
-        # Setting btns
-        self.sizer.Add(self.photoTxt, 0, wx.ALL, 5)
-        self.sizer.Add(self.browseFolderBtn, 0, wx.ALL, 5)
-        self.sizer2.Add(self.targetPhotoTxt, 0, wx.ALL, 5)
-        self.sizer2.Add(self.targetFolderBtn, 0, wx.ALL, 5)
-        self.sizer3.Add(self.tagListSettingTxt, 0, wx.ALL, 5)              
-        self.sizer3.Add(self.loadTagListBtn, 0, wx.ALL, 5)
+        self.browseFolderSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.browseFolderSizer.Add(self.photoTxt, 0, wx.ALL, 5)
+        self.browseFolderSizer.Add(self.browseFolderBtn, 0, wx.ALL, 5)
+        self.settingSizer.Add(self.browseFolderSizer, 0, wx.ALL, 5)
 
-        # photo control btns
-        self.sizer4.Add(self.prevPhotoBtn, 0, wx.ALL, 5)
-        self.sizer4.Add(self.nextPhotoBtn, 0, wx.ALL, 5)
+        self.targetFolderSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.targetFolderSizer.Add(self.targetPhotoTxt, 0, wx.ALL, 5)
+        self.targetFolderSizer.Add(self.targetFolderBtn, 0, wx.ALL, 5)
+        self.settingSizer.Add(self.targetFolderSizer, 0, wx.ALL, 5)
 
-        self.mainSizer.Add(self.sizer, 0, wx.ALL, 5)
-        self.mainSizer.Add(self.sizer2, 0, wx.ALL, 5)
-        self.mainSizer.Add(self.sizer3, 0, wx.ALL, 5)
-        self.mainSizer.Add(self.sizer4, 0, wx.ALL, 5)
-        self.mainSizer.Add(self.imageCtrl, 0, wx.ALL, 5)
+        self.tagListSettingSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.tagListSettingSizer.Add(self.tagListSettingTxt, 0, wx.ALL, 5)
+        self.tagListSettingSizer.Add(self.loadTagListBtn, 0, wx.ALL, 5)
+        self.settingSizer.Add(self.tagListSettingSizer, 0, wx.ALL, 5)
+
+        self.photoMainSizer = wx.GridSizer(rows=0, cols=2, hgap=0, vgap=0)
+        self.tagController = wx.BoxSizer(wx.VERTICAL)
+        
+        
+
+        # prev & next btn
+        self.photoController = wx.BoxSizer(wx.HORIZONTAL)
+        self.photoController.Add(self.prevPhotoBtn, 0, wx.ALL, 5)
+        self.photoController.Add(self.nextPhotoBtn, 0, wx.ALL, 5)
+        self.tagController.Add(self.photoController, 0, wx.ALL, 5)
+
+        self.photoMainSizer.Add(self.photoContainer, 0, wx.ALL, 5)
+        self.photoMainSizer.Add(self.tagController, 0, wx.ALL, 5)
+
+        self.mainSizer.Add(self.settingSizer, 0, wx.ALL, 5)
+        self.mainSizer.Add(self.photoMainSizer, 0, wx.ALL, 5)
+
+        # source photo path 
+        self.mainSizer.Add(self.currentPhotoPathHint, 0, wx.ALL, 5)
+        self.mainSizer.Add(self.currentPhotoPathContent, 0, wx.ALL, 5)
 
         # Auto load settgin in debug mode
         self.debugMode()
@@ -100,9 +113,8 @@ class PhotoCtrl(wx.App):
         self.panel.SetSizer(self.mainSizer)
         self.mainSizer.Fit(self.frame)
         self.panel.Layout()
-    
-        #=======================================================
 
+    
     def onBrowseFolder(self,event):
         dialog = wx.DirDialog(None, "Choose root folder",style=wx.OPEN)
         if dialog.ShowModal() == wx.ID_OK:
@@ -133,9 +145,9 @@ class PhotoCtrl(wx.App):
         # Remove old tag list (if exist)
         if self.tagListSizer is not None:
             print 'REMOVE old tagListSizer'
-            self.mainSizer.Remove(self.tagListSizer)
-            
-        self.tagListSizer = wx.BoxSizer(wx.HORIZONTAL)
+            self.tagListSizer.DeleteWindows()
+
+        self.tagListSizer = wx.GridSizer(rows=0, cols=5, hgap=3, vgap=3)
         self.tagBtn = []
         tagBtnIdx = 0
         # Extract tag list from file
@@ -150,11 +162,11 @@ class PhotoCtrl(wx.App):
                     # Append Btns to sizer
                     self.tagListSizer.Add(tagBtn, 0, wx.ALL, 5)
                     tagBtnIdx += 1
-        # Append btns to panel & reload it
-        self.mainSizer.Add(self.tagListSizer, 0, wx.ALL, 5)
-        self.panel.SetSizer(self.mainSizer)
-        self.mainSizer.Fit(self.frame)
-        self.panel.Layout()
+        # Append btns to panel
+        self.tagController.Add(self.tagListSizer, 0, wx.ALL, 5)
+        
+        # refresh layout
+        self.mainSizer.Layout()
 
 
     def onPhotoChange(self, PhotoCtrl):
@@ -240,7 +252,8 @@ class PhotoCtrl(wx.App):
             NewW = self.PhotoMaxSize * W / H
         img = img.Scale(NewW,NewH)
  
-        self.imageCtrl.SetBitmap(wx.BitmapFromImage(img))
+        self.photoContainer.SetBitmap(wx.BitmapFromImage(img))
+        self.currentPhotoPathContent.SetLabel(filepath)
         self.panel.Refresh()
 
     def setDebugMode(self,debug_flag):

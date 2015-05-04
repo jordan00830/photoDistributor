@@ -32,6 +32,8 @@
 * [DONE] function : add & modify tag list (load tag list from file)
 * [DONE] lick tagBtn to copy, click again to cancel
 * [DONE] store tag status ( into memory)
+* [DONE] layout version 1.0
+* [DONE] add source img path infomation
 * save photo distributor result (including source folder, target folder, tag list file ,tag status)
 * Detect source dir file change
-* layout
+
