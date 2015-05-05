@@ -26,6 +26,18 @@ class PhotoCtrl(wx.App):
         self.tagListSizer = None
         self.tagStatus = {} # {photoIdx : {btnID:true, btnID:false}}
 
+        #self.panel.BackgroundColour = (200, 250, 250)
+        # pick an image file you have in the working folder
+        # you can load .jpg  .png  .bmp  or .gif files
+        image_file = 'assets/background.jpg'
+        bmp1 = wx.Image(image_file, wx.BITMAP_TYPE_ANY).ConvertToBitmap()
+        # image's upper left corner anchors at panel coordinates (0, 0)
+        self.bitmap1 = wx.StaticBitmap(self.panel, -1, bmp1, (0, 0))
+
+        #self.frame.SetMinSize( size=(1000,1000) )
+        self.frame.SetMinSize((1000,750)) 
+        
+
         #Initialize widgets
         self.createComponents()
         self.drawLayout()
@@ -34,6 +46,9 @@ class PhotoCtrl(wx.App):
     def createComponents(self):
         # ============== Components & event ===================
         
+
+
+
         img = wx.EmptyImage(self.PhotoMaxSize,self.PhotoMaxSize)
         self.photoContainer = wx.StaticBitmap(self.panel, wx.ID_ANY, 
                                          wx.BitmapFromImage(img))
@@ -100,12 +115,17 @@ class PhotoCtrl(wx.App):
         self.photoMainSizer.Add(self.photoContainer, 0, wx.ALL, 5)
         self.photoMainSizer.Add(self.tagController, 0, wx.ALL, 5)
 
-        self.mainSizer.Add(self.settingSizer, 0, wx.ALL, 5)
-        self.mainSizer.Add(self.photoMainSizer, 0, wx.ALL, 5)
 
+
+        # basic setting
+        self.mainSizer.Add(self.settingSizer, 0, wx.ALL, 5)
+        
         # source photo path 
         self.mainSizer.Add(self.currentPhotoPathHint, 0, wx.ALL, 5)
         self.mainSizer.Add(self.currentPhotoPathContent, 0, wx.ALL, 5)
+        
+        # photo container && tag controller
+        self.mainSizer.Add(self.photoMainSizer, 0, wx.ALL, 5)
 
         # Auto load settgin in debug mode
         self.debugMode()
@@ -262,17 +282,17 @@ class PhotoCtrl(wx.App):
     def debugMode(self):
         if self.debug_flag is True:
             # photo source folder
-            self.photoRootPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test Imgs測試圖檔')
+            self.photoRootPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/test Imgs測試圖檔')
             self.photoTxt.SetValue(self.photoRootPath)
             self.getAllFiles(self.photoRootPath)    
             self.onView(self.allPhotos[0])            
 
             # target folder
-            self.photoTargetPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/測試目標目錄')
+            self.photoTargetPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/測試目標目錄')
             self.targetPhotoTxt.SetValue(self.photoTargetPath)
 
             # tag list setting file
-            self.tagListPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/tagList測試檔案範例2')
+            self.tagListPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/tagList測試檔案範例2')
             self.tagListSettingTxt.SetValue(self.tagListPath)
             self.genTagBtns()    
 
