@@ -1,5 +1,4 @@
-# -*- coding: utf8 -*-
-
+#-*- coding: utf-8 -*-
 import os
 import wx
 import sys
@@ -8,10 +7,13 @@ from enum import Enum
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
+ENV_SLASH = None
+#ENV_SLASH = EnumEnvSlash.WINDOWS
+
 class PhotoCtrl(wx.App):
-    def __init__(self, debug_flag, env , redirect=False, filename=None):
+    def __init__(self, debug_flag , redirect=False, filename=None):
         self.debug_flag = debug_flag
-        self.env = env # OS: MAC or WINDOWS
         wx.App.__init__(self, redirect, filename)
         self.frame = wx.Frame(None, title='Photo Distributor')
         self.panel = wx.Panel(self.frame)
@@ -23,13 +25,8 @@ class PhotoCtrl(wx.App):
         self.tagListSizer = None
         self.tagStatus = {} # {photoIdx : {btnID:true, btnID:false}}
 
-        
-        #image_file = 'assets/background.jpg'
-        #bmp1 = wx.Image(image_file, wx.BITMAP_TYPE_ANY).ConvertToBitmap()
-        #self.bitmap1 = wx.StaticBitmap(self.panel, -1, bmp1, (0, 0))
-
         #self.frame.SetMinSize( size=(1000,1000) )
-        self.frame.SetMinSize((1000,750)) 
+        self.frame.SetMinSize((700,600)) 
         
 
         #Initialize widgets
@@ -129,6 +126,7 @@ class PhotoCtrl(wx.App):
         dialog = wx.DirDialog(None, "Choose root folder",style=wx.OPEN)
         if dialog.ShowModal() == wx.ID_OK:
             self.photoRootPath = dialog.GetPath()
+            #print self.photoRootPath
             self.photoTxt.SetValue(self.photoRootPath)
             self.getAllFiles(self.photoRootPath)
         #Show first photo
@@ -163,9 +161,7 @@ class PhotoCtrl(wx.App):
         # Extract tag list from file
         with open(self.tagListPath, "r") as f:
             for tag in f:
-                tag = tag.replace("\n","").replace("\r","").strip()
-                if self.env == EnumEnv.WINDOWS:
-                    tag = tag.decode('big5')
+                tag = tag.replace("\n","").replace("\r","").strip().decode('big5')
                 if len(tag) > 0:
                     print tag
                     # Dynamic generate tag btns & bind event
@@ -198,22 +194,27 @@ class PhotoCtrl(wx.App):
         btnID = btn.GetId()
 
         # Get the final target path for copy or delete
+        print self.photoTargetPath.encode('big5');
+
         finalTargetDir = os.path.join(self.photoTargetPath.encode('utf-8'),tagName.encode('utf-8'))
+        #finalTargetDir = self.photoTargetPath.encode('big5') + ENV_SLASH + tagName.encode('big5')
         sourceFile_fullpath = self.allPhotos[self.currentPhotoIdx]
+        #sourceFileName = sourceFile_fullpath.split(ENV_SLASH)[-1]
         sourceFileName = os.path.basename(sourceFile_fullpath)
         finalTargetPath = os.path.join(finalTargetDir,sourceFileName)
+        print finalTargetDir;
+        print self.allPhotos[self.currentPhotoIdx]
         
-        if self.env == EnumEnv.WINDOWS:
-            finalTargetDir = finalTargetDir.decode('utf-8')
-            finalTargetPath = finalTargetPath.decode('utf-8')
-            self.allPhotos[self.currentPhotoIdx] = self.allPhotos[self.currentPhotoIdx].decode('utf-8')
-
+        finalTargetDir = finalTargetDir.decode('utf-8')
+        finalTargetPath = finalTargetPath.decode('utf-8')
+        self.allPhotos[self.currentPhotoIdx] = self.allPhotos[self.currentPhotoIdx].decode('utf-8') 
         if not os.path.exists(finalTargetDir) or not os.path.isdir(finalTargetDir):
             print 'dir not exist, mkdir'    
             os.mkdir(finalTargetDir)
         # copy the file to target folder
         if isPress is True:
             print 'copy file to target folder'    
+            #shutil.copyfile(self.allPhotos[self.currentPhotoIdx].decode('utf-8').encode('big5'), finalTargetPath.decode('utf-8').encode('big5'))        
             shutil.copyfile(self.allPhotos[self.currentPhotoIdx], finalTargetPath)        
             self.saveTagStatus(btnID,isPress)
         # delete target folder file
@@ -251,6 +252,7 @@ class PhotoCtrl(wx.App):
             for filename in filenames:
                 if filename.endswith(('.jpg', '.JPG', '.jpeg', '.JPEG' , '.gif' , '.GIF' , '.png' ,'.PNG')):
                     self.allPhotos.append(os.path.join(root, filename).encode('utf-8'))
+                    #self.allPhotos.append(os.path.join(root, filename).encode('big5'))
         print self.allPhotos
         print 'Total #Files: ' , len(self.allPhotos)            
 
@@ -279,30 +281,36 @@ class PhotoCtrl(wx.App):
     def debugMode(self):
         if self.debug_flag is True:
             # photo source folder
-            self.photoRootPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/test Imgs測試圖檔')
+            #self.photoRootPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/test Imgs測試圖檔')
+            self.photoRootPath = unicode('C:\\photoDistributor-master\\test\\test Imgs測試圖檔')
             self.photoTxt.SetValue(self.photoRootPath)
             self.getAllFiles(self.photoRootPath)    
             self.onView(self.allPhotos[0])            
 
             # target folder
-            self.photoTargetPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/測試目標目錄')
+            #self.photoTargetPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/測試目標目錄')
+            self.photoTargetPath = unicode('C:\\photoDistributor-master\\test\\測試目標目錄')
             self.targetPhotoTxt.SetValue(self.photoTargetPath)
 
             # tag list setting file
-            self.tagListPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/tagList測試檔案範例2')
+            #self.tagListPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/tagList測試檔案範例2')
+            self.tagListPath = unicode('C:\\photoDistributor-master\\test\\tagList測試檔案範例2')
             self.tagListSettingTxt.SetValue(self.tagListPath)
-            self.genTagBtns()    
+            self.genTagBtns() 
 
  
 class EnumPhotoCtrl(Enum):
     PREV = 1
     NEXT = 2
 
-class EnumEnv(Enum):
-    MAC = 1
-    WINDOWS = 2
+class EnumEnvSlash(Enum):
+    WINDOWS = '\\'
+    MAC_LINUX = '/'
 
 if __name__ == '__main__':
+    global ENV_SLASH
+    ENV_SLASH = EnumEnvSlash.MAC_LINUX
+    ENV_SLASH = EnumEnvSlash.WINDOWS
     # Set True as debug mode (auto setting source folder, target folder, tag list file)
-    app = PhotoCtrl(True,EnumEnv.MAC)
+    app = PhotoCtrl(False)
     app.MainLoop()

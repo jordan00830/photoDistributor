@@ -34,6 +34,10 @@
 * [DONE] store tag status ( into memory)
 * [DONE] layout version 1.0
 * [DONE] add source img path infomation
+* Keyboard arraow to change photo
+* Rotate photo
+* Alert if file exist and support rename file
+* Final photo show msg
 * save photo distributor result (including source folder, target folder, tag list file ,tag status)
 * Detect source dir file change
 
