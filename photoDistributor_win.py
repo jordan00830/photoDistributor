@@ -250,7 +250,7 @@ class PhotoCtrl(wx.App):
         self.allPhotos = []
         for root, dirnames, filenames in os.walk(rootPath):
             for filename in filenames:
-                if filename.endswith(('.jpg', '.JPG', '.jpeg', '.JPEG' , '.gif' , '.GIF' , '.png' ,'.PNG')):
+                if filename.lower().endswith(('.jpg', '.jpeg' , '.gif', '.png')):
                     self.allPhotos.append(os.path.join(root, filename).encode('utf-8'))
                     #self.allPhotos.append(os.path.join(root, filename).encode('big5'))
         print self.allPhotos

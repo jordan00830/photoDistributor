@@ -4,6 +4,8 @@ import os
 import wx
 import sys
 import shutil
+#import ExifTags
+from PIL import Image
 from enum import Enum
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -23,14 +25,13 @@ class PhotoCtrl(wx.App):
         self.tagListSizer = None
         self.tagStatus = {} # {photoIdx : {btnID:true, btnID:false}}
 
+        self.Bind(wx.EVT_CHAR_HOOK, self.onKey) # Bind key event
         
         #image_file = 'assets/background.jpg'
         #bmp1 = wx.Image(image_file, wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         #self.bitmap1 = wx.StaticBitmap(self.panel, -1, bmp1, (0, 0))
-
-        #self.frame.SetMinSize( size=(1000,1000) )
+ 
         self.frame.SetMinSize((1000,750)) 
-        
 
         #Initialize widgets
         self.createComponents()
@@ -63,12 +64,20 @@ class PhotoCtrl(wx.App):
         self.currentPhotoPathContent = wx.StaticText(self.panel, label=unicode('(請設定照片資料夾)'))
 
         # prev photo btn
-        self.prevPhotoBtn = wx.Button(self.panel, label= unicode('<< 前一張'),  size = (200,-1))
+        self.prevPhotoBtn = wx.Button(self.panel, label= unicode('<< 前一張'),  size = (230,-1))
         self.prevPhotoBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoChange(EnumPhotoCtrl.PREV))
 
         # next photo btn
-        self.nextPhotoBtn = wx.Button(self.panel, label= unicode('下一張 >>'), size = (200,-1))
+        self.nextPhotoBtn = wx.Button(self.panel, label= unicode('下一張 >>'), size = (230,-1))
         self.nextPhotoBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoChange(EnumPhotoCtrl.NEXT))
+
+        # clockwise rotato photo btn
+        self.clkwiseRotateBtn = wx.Button(self.panel, label = unicode('順時針旋轉 ↻'), size = (230,-1))
+        self.clkwiseRotateBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoRotate(EnumPhotoCtrl.CL_WISE))
+
+        # counter-clockwise rotate photo btn
+        self.c_clkwiseRotateBtn = wx.Button(self.panel, label = unicode('逆時針旋轉 ↺'), size = (230,-1))
+        self.c_clkwiseRotateBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoRotate(EnumPhotoCtrl.C_CL_WISE))
 
     def drawLayout(self):
         #=================== Layout ============================
@@ -76,16 +85,19 @@ class PhotoCtrl(wx.App):
 
         self.settingSizer = wx.BoxSizer(wx.VERTICAL)
         
+        # source tolder
         self.browseFolderSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.browseFolderSizer.Add(self.photoTxt, 0, wx.ALL, 5)
         self.browseFolderSizer.Add(self.browseFolderBtn, 0, wx.ALL, 5)
         self.settingSizer.Add(self.browseFolderSizer, 0, wx.ALL, 5)
 
+        # target folder
         self.targetFolderSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.targetFolderSizer.Add(self.targetPhotoTxt, 0, wx.ALL, 5)
         self.targetFolderSizer.Add(self.targetFolderBtn, 0, wx.ALL, 5)
         self.settingSizer.Add(self.targetFolderSizer, 0, wx.ALL, 5)
 
+        # tag list btns
         self.tagListSettingSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.tagListSettingSizer.Add(self.tagListSettingTxt, 0, wx.ALL, 5)
         self.tagListSettingSizer.Add(self.loadTagListBtn, 0, wx.ALL, 5)
@@ -94,23 +106,25 @@ class PhotoCtrl(wx.App):
         self.photoMainSizer = wx.GridSizer(rows=0, cols=2, hgap=0, vgap=0)
         self.tagController = wx.BoxSizer(wx.VERTICAL)
         
-        
+        # photo controller
+        self.photoController = wx.GridSizer(rows=0, cols=2, hgap=0, vgap=0)
 
-        # prev & next btn
-        self.photoController = wx.BoxSizer(wx.HORIZONTAL)
+        # rotate photo btns
+        self.photoController.Add(self.c_clkwiseRotateBtn, 0 , wx.ALL, 5)
+        self.photoController.Add(self.clkwiseRotateBtn, 0 , wx.ALL, 5)
+        # prev btn & next btn
         self.photoController.Add(self.prevPhotoBtn, 0, wx.ALL, 5)
         self.photoController.Add(self.nextPhotoBtn, 0, wx.ALL, 5)
+        
         self.tagController.Add(self.photoController, 0, wx.ALL, 5)
 
         self.photoMainSizer.Add(self.photoContainer, 0, wx.ALL, 5)
         self.photoMainSizer.Add(self.tagController, 0, wx.ALL, 5)
 
-
-
         # basic setting
         self.mainSizer.Add(self.settingSizer, 0, wx.ALL, 5)
         
-        # source photo path 
+        # source photo info path 
         self.mainSizer.Add(self.currentPhotoPathHint, 0, wx.ALL, 5)
         self.mainSizer.Add(self.currentPhotoPathContent, 0, wx.ALL, 5)
         
@@ -164,7 +178,7 @@ class PhotoCtrl(wx.App):
         with open(self.tagListPath, "r") as f:
             for tag in f:
                 tag = tag.replace("\n","").replace("\r","").strip()
-                if self.env == EnumEnv.WINDOWS:
+                if self.env is EnumEnv.WINDOWS:
                     tag = tag.decode('big5')
                 if len(tag) > 0:
                     print tag
@@ -190,6 +204,18 @@ class PhotoCtrl(wx.App):
         self.onView(self.allPhotos[self.currentPhotoIdx])
         self.loadTagStatus()
 
+    def onPhotoRotate(self, PhotoCtrl):
+        filename = self.allPhotos[self.currentPhotoIdx]
+        img = Image.open(filename)
+        if PhotoCtrl == EnumPhotoCtrl.CL_WISE:
+            print 'Rotate clickwise'
+            img.rotate(-90, expand=True).save(filename)
+        elif PhotoCtrl == EnumPhotoCtrl.C_CL_WISE:
+            print 'Rotate counter-clockwise'
+            img.rotate(90, expand=True).save(filename)
+
+
+        self.onView(filename)
 
     def onTagPhoto(self,event):
         btn = event.GetEventObject()
@@ -203,7 +229,7 @@ class PhotoCtrl(wx.App):
         sourceFileName = os.path.basename(sourceFile_fullpath)
         finalTargetPath = os.path.join(finalTargetDir,sourceFileName)
         
-        if self.env == EnumEnv.WINDOWS:
+        if self.env is EnumEnv.WINDOWS:
             finalTargetDir = finalTargetDir.decode('utf-8')
             finalTargetPath = finalTargetPath.decode('utf-8')
             self.allPhotos[self.currentPhotoIdx] = self.allPhotos[self.currentPhotoIdx].decode('utf-8')
@@ -249,7 +275,7 @@ class PhotoCtrl(wx.App):
         self.allPhotos = []
         for root, dirnames, filenames in os.walk(rootPath):
             for filename in filenames:
-                if filename.endswith(('.jpg', '.JPG', '.jpeg', '.JPEG' , '.gif' , '.GIF' , '.png' ,'.PNG')):
+                if filename.lower().endswith(('.jpg', '.jpeg' , '.gif', '.png')):                
                     self.allPhotos.append(os.path.join(root, filename).encode('utf-8'))
         print self.allPhotos
         print 'Total #Files: ' , len(self.allPhotos)            
@@ -276,6 +302,16 @@ class PhotoCtrl(wx.App):
     def setDebugMode(self,debug_flag):
         self.debug_flag = debug_flag
 
+    def onKey(self,event):
+        keyCode = event.GetKeyCode()
+        if (keyCode == 316) or (keyCode == 317):
+            # Next photo
+            self.onPhotoChange(EnumPhotoCtrl.NEXT)
+        if (keyCode == 314) or (keyCode == 315):
+            # Prev photo
+            self.onPhotoChange(EnumPhotoCtrl.PREV)
+
+
     def debugMode(self):
         if self.debug_flag is True:
             # photo source folder
@@ -292,11 +328,12 @@ class PhotoCtrl(wx.App):
             self.tagListPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/tagList測試檔案範例2')
             self.tagListSettingTxt.SetValue(self.tagListPath)
             self.genTagBtns()    
-
  
 class EnumPhotoCtrl(Enum):
-    PREV = 1
-    NEXT = 2
+    PREV = 1 # previous photo
+    NEXT = 2 # next photo
+    CL_WISE = 3 # clockwise rotate photo
+    C_CL_WISE = 4 # counter-clockwise rotate photo
 
 class EnumEnv(Enum):
     MAC = 1

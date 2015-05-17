@@ -2,13 +2,15 @@
 
 ## Setup dev env
 
-* [Download wxPython Here](http://www.wxpython.org/download.php)
+* [Download & intall wxPython Here](http://www.wxpython.org/download.php)
+
  
 #### MAC
 
 ```
 $ sudo pip install -U py2app
 $ sudo pip install enum
+$ sudo pip install pillow
 ```
 	
 #### Windows	(Or use pip install)
@@ -16,6 +18,8 @@ $ sudo pip install enum
 [Download py2exe here](http://www.py2exe.org/)
 
 [Download enum here](https://pypi.python.org/pypi/enum/) 
+
+[Download & intall Pillow Here](https://pillow.readthedocs.org/installation.html)
 
 ## Test & Dev
 
@@ -46,12 +50,13 @@ $ python setup_win.py py2exe
 * [DONE] layout version 1.0
 * [DONE] add source img path infomation
 * [DONE] support windows decoding
-* Keyboard arraow to change photo
-* Rotate photo
+* [DONE] Keyboard arraow to change photo
+* [DONE] Rotate photo
 * Alert if file exist and support rename file
 * Final photo show msg
 * Automatically load tag btns when set up target folder
 * add mask when loading photos
+* RWD
 * save photo distributor result (including source folder, target folder, tag list file ,tag status)
 * Detect source dir file change
 
