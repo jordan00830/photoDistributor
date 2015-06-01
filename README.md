@@ -51,9 +51,11 @@ $ python setup_win.py py2exe
 * [DONE] add source img path infomation
 * [DONE] support windows decoding
 * [DONE] Keyboard arraow to change photo
-* [DONE] Rotate photo
+* [DONE]Add author info
+* [DONE]Final & first photo show msg
+* Auto resize
+* Rotate photo (BUG : black border)
 * Alert if file exist and support rename file
-* Final photo show msg
 * Automatically load tag btns when set up target folder
 * add mask when loading photos
 * RWD

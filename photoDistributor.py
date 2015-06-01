@@ -5,7 +5,7 @@ import wx
 import sys
 import shutil
 #import ExifTags
-from PIL import Image
+# from PIL import Image
 from enum import Enum
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -16,7 +16,11 @@ class PhotoCtrl(wx.App):
         self.env = env # OS: MAC or WINDOWS
         wx.App.__init__(self, redirect, filename)
         self.frame = wx.Frame(None, title='Photo Distributor')
+
+        
+
         self.panel = wx.Panel(self.frame)
+        #self.panel.Bind(wx.EVT_SIZE, self.onResizeWindow)
 
         self.PhotoMaxSize = 500
         self.photoTargetPath = None
@@ -31,13 +35,20 @@ class PhotoCtrl(wx.App):
         #bmp1 = wx.Image(image_file, wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         #self.bitmap1 = wx.StaticBitmap(self.panel, -1, bmp1, (0, 0))
  
-        self.frame.SetMinSize((1000,750)) 
+        self.frameWidth = 1000
+        self.frameHeight = 750
+
+        self.frame.SetMinSize((self.frameWidth,self.frameHeight)) 
 
         #Initialize widgets
         self.createComponents()
         self.drawLayout()
         self.frame.Show()
- 
+    
+    #def onResizeWindow(self,event):
+    #    print 'Window RESIZE!!!!!'
+    #    self.panel.Layout()
+
     def createComponents(self):
         # ============== Components & event ===================
         img = wx.EmptyImage(self.PhotoMaxSize,self.PhotoMaxSize)
@@ -72,12 +83,15 @@ class PhotoCtrl(wx.App):
         self.nextPhotoBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoChange(EnumPhotoCtrl.NEXT))
 
         # clockwise rotato photo btn
-        self.clkwiseRotateBtn = wx.Button(self.panel, label = unicode('順時針旋轉 ↻'), size = (230,-1))
-        self.clkwiseRotateBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoRotate(EnumPhotoCtrl.CL_WISE))
+        # self.clkwiseRotateBtn = wx.Button(self.panel, label = unicode('順時針旋轉 ↻'), size = (230,-1))
+        # self.clkwiseRotateBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoRotate(EnumPhotoCtrl.CL_WISE))
 
-        # counter-clockwise rotate photo btn
-        self.c_clkwiseRotateBtn = wx.Button(self.panel, label = unicode('逆時針旋轉 ↺'), size = (230,-1))
-        self.c_clkwiseRotateBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoRotate(EnumPhotoCtrl.C_CL_WISE))
+        # # counter-clockwise rotate photo btn
+        # self.c_clkwiseRotateBtn = wx.Button(self.panel, label = unicode('逆時針旋轉 ↺'), size = (230,-1))
+        # self.c_clkwiseRotateBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoRotate(EnumPhotoCtrl.C_CL_WISE))
+
+        # author information
+        self.authorInfo = wx.StaticText(self.panel,label=unicode('- Power by Jordan Hsu, jordan00830@gmail.com -'),size = (self.frameWidth,15),  style=wx.ALIGN_CENTER)
 
     def drawLayout(self):
         #=================== Layout ============================
@@ -110,9 +124,10 @@ class PhotoCtrl(wx.App):
         self.photoController = wx.GridSizer(rows=0, cols=2, hgap=0, vgap=0)
 
         # rotate photo btns
-        self.photoController.Add(self.c_clkwiseRotateBtn, 0 , wx.ALL, 5)
-        self.photoController.Add(self.clkwiseRotateBtn, 0 , wx.ALL, 5)
-        # prev btn & next btn
+        # self.photoController.Add(self.c_clkwiseRotateBtn, 0 , wx.ALL, 5)
+        # self.photoController.Add(self.clkwiseRotateBtn, 0 , wx.ALL, 5)
+        
+        # # prev btn & next btn
         self.photoController.Add(self.prevPhotoBtn, 0, wx.ALL, 5)
         self.photoController.Add(self.nextPhotoBtn, 0, wx.ALL, 5)
         
@@ -120,6 +135,9 @@ class PhotoCtrl(wx.App):
 
         self.photoMainSizer.Add(self.photoContainer, 0, wx.ALL, 5)
         self.photoMainSizer.Add(self.tagController, 0, wx.ALL, 5)
+
+        # author info
+        self.mainSizer.Add(self.authorInfo, 0 , wx.ALL, 5)
 
         # basic setting
         self.mainSizer.Add(self.settingSizer, 0, wx.ALL, 5)
@@ -130,6 +148,8 @@ class PhotoCtrl(wx.App):
         
         # photo container && tag controller
         self.mainSizer.Add(self.photoMainSizer, 0, wx.ALL, 5)
+
+        
 
         # Auto load settgin in debug mode
         self.debugMode()
@@ -194,25 +214,31 @@ class PhotoCtrl(wx.App):
         # refresh layout
         self.mainSizer.Layout()
 
-
     def onPhotoChange(self, PhotoCtrl):
-        if PhotoCtrl == EnumPhotoCtrl.PREV and self.currentPhotoIdx > 0:
-            self.currentPhotoIdx -= 1
-        elif PhotoCtrl == EnumPhotoCtrl.NEXT and self.currentPhotoIdx < len(self.allPhotos) - 1:    
-            self.currentPhotoIdx += 1
+        if PhotoCtrl == EnumPhotoCtrl.PREV:
+            if self.currentPhotoIdx > 0:
+                self.currentPhotoIdx -= 1
+            elif self.currentPhotoIdx == 0:
+                wx.MessageDialog(self.panel, style=wx.OK|wx.CENTRE, message=unicode("已經是第一張照片啦！")).ShowModal()
         
+        elif PhotoCtrl == EnumPhotoCtrl.NEXT:    
+            if self.currentPhotoIdx < len(self.allPhotos) - 1:
+                self.currentPhotoIdx += 1
+            elif self.currentPhotoIdx == len(self.allPhotos) - 1:
+                wx.MessageDialog(self.panel, style=wx.OK|wx.CENTRE, message=unicode("已經是最後一張照片啦！")).ShowModal()
+
         self.onView(self.allPhotos[self.currentPhotoIdx])
         self.loadTagStatus()
 
     def onPhotoRotate(self, PhotoCtrl):
         filename = self.allPhotos[self.currentPhotoIdx]
-        img = Image.open(filename)
-        if PhotoCtrl == EnumPhotoCtrl.CL_WISE:
-            print 'Rotate clickwise'
-            img.rotate(-90, expand=True).save(filename)
-        elif PhotoCtrl == EnumPhotoCtrl.C_CL_WISE:
-            print 'Rotate counter-clockwise'
-            img.rotate(90, expand=True).save(filename)
+        # img = Image.open(filename)
+        # if PhotoCtrl == EnumPhotoCtrl.CL_WISE:
+        #     print 'Rotate clickwise'
+        #     img.rotate(-90, expand=True).save(filename)
+        # elif PhotoCtrl == EnumPhotoCtrl.C_CL_WISE:
+        #     print 'Rotate counter-clockwise'
+        #     img.rotate(90, expand=True).save(filename)
 
 
         self.onView(filename)
@@ -294,7 +320,8 @@ class PhotoCtrl(wx.App):
             NewH = self.PhotoMaxSize
             NewW = self.PhotoMaxSize * W / H
         img = img.Scale(NewW,NewH)
- 
+        self.currentImg = img
+
         self.photoContainer.SetBitmap(wx.BitmapFromImage(img))
         self.currentPhotoPathContent.SetLabel(filepath)
         self.panel.Refresh()
@@ -304,10 +331,11 @@ class PhotoCtrl(wx.App):
 
     def onKey(self,event):
         keyCode = event.GetKeyCode()
-        if (keyCode == 316) or (keyCode == 317):
+        print keyCode
+        if keyCode in (EnumKeyCode.ARROW_RIGHT, EnumKeyCode.ARROW_DOWN):
             # Next photo
             self.onPhotoChange(EnumPhotoCtrl.NEXT)
-        if (keyCode == 314) or (keyCode == 315):
+        if keyCode in (EnumKeyCode.ARROW_LEFT, EnumKeyCode.ARROW_UP):
             # Prev photo
             self.onPhotoChange(EnumPhotoCtrl.PREV)
 
@@ -335,11 +363,17 @@ class EnumPhotoCtrl(Enum):
     CL_WISE = 3 # clockwise rotate photo
     C_CL_WISE = 4 # counter-clockwise rotate photo
 
+class EnumKeyCode(Enum):
+    ARROW_LEFT = 314
+    ARROW_UP = 315
+    ARROW_RIGHT = 316
+    ARROW_DOWN = 317
+
 class EnumEnv(Enum):
     MAC = 1
     WINDOWS = 2
 
 if __name__ == '__main__':
     # Set True as debug mode (auto setting source folder, target folder, tag list file)
-    app = PhotoCtrl(True,EnumEnv.MAC)
+    app = PhotoCtrl(False,EnumEnv.MAC)
     app.MainLoop()
