@@ -28,6 +28,7 @@ class PhotoCtrl(wx.App):
         self.currentPhotoIdx = 0
         self.tagListSizer = None
         self.tagStatus = {} # {photoIdx : {btnID:true, btnID:false}}
+        self.btnIdTagNameMap = {} # {btnID : tagName,...}
 
         self.Bind(wx.EVT_CHAR_HOOK, self.onKey) # Bind key event
         
@@ -75,12 +76,16 @@ class PhotoCtrl(wx.App):
         self.currentPhotoPathContent = wx.StaticText(self.panel, label=unicode('(請設定照片資料夾)'))
 
         # prev photo btn
-        self.prevPhotoBtn = wx.Button(self.panel, label= unicode('<< 前一張'),  size = (230,-1))
+        self.prevPhotoBtn = wx.Button(self.panel, label= unicode('<< 前一張'),  size = (155,-1))
         self.prevPhotoBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoChange(EnumPhotoCtrl.PREV))
 
         # next photo btn
-        self.nextPhotoBtn = wx.Button(self.panel, label= unicode('下一張 >>'), size = (230,-1))
+        self.nextPhotoBtn = wx.Button(self.panel, label= unicode('下一張 >>'), size = (155,-1))
         self.nextPhotoBtn.Bind(wx.EVT_BUTTON, lambda event: self.onPhotoChange(EnumPhotoCtrl.NEXT))
+
+        # previous tags btn
+        self.prevTagsBtn = wx.Button(self.panel, label= unicode('套用上一張照片設定'), size = (155,-1))
+        self.prevTagsBtn.Bind(wx.EVT_BUTTON, lambda event: self.onTagPrevSetting())
 
         # clockwise rotato photo btn
         # self.clkwiseRotateBtn = wx.Button(self.panel, label = unicode('順時針旋轉 ↻'), size = (230,-1))
@@ -121,14 +126,15 @@ class PhotoCtrl(wx.App):
         self.tagController = wx.BoxSizer(wx.VERTICAL)
         
         # photo controller
-        self.photoController = wx.GridSizer(rows=0, cols=2, hgap=0, vgap=0)
+        self.photoController = wx.GridSizer(rows=0, cols=3, hgap=0, vgap=0)
 
         # rotate photo btns
         # self.photoController.Add(self.c_clkwiseRotateBtn, 0 , wx.ALL, 5)
         # self.photoController.Add(self.clkwiseRotateBtn, 0 , wx.ALL, 5)
         
-        # # prev btn & next btn
+        # # prev btn & prev tags btn & next btn
         self.photoController.Add(self.prevPhotoBtn, 0, wx.ALL, 5)
+        self.photoController.Add(self.prevTagsBtn, 0 , wx.ALL, 5)
         self.photoController.Add(self.nextPhotoBtn, 0, wx.ALL, 5)
         
         self.tagController.Add(self.photoController, 0, wx.ALL, 5)
@@ -149,8 +155,6 @@ class PhotoCtrl(wx.App):
         # photo container && tag controller
         self.mainSizer.Add(self.photoMainSizer, 0, wx.ALL, 5)
 
-        
-
         # Auto load settgin in debug mode
         self.debugMode()
 
@@ -160,7 +164,7 @@ class PhotoCtrl(wx.App):
 
     
     def onBrowseFolder(self,event):
-        dialog = wx.DirDialog(None, "Choose root folder",style=wx.OPEN)
+        dialog = wx.DirDialog(None, "Choose root folder",style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.photoRootPath = dialog.GetPath()
             self.photoTxt.SetValue(self.photoRootPath)
@@ -170,7 +174,7 @@ class PhotoCtrl(wx.App):
         dialog.Destroy()
 
     def onSetTargetFolder(self,event):
-        dialog = wx.DirDialog(None, "Choose target folder",style=wx.OPEN)
+        dialog = wx.DirDialog(None, "Choose target folder",style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.photoTargetPath = dialog.GetPath()
             self.targetPhotoTxt.SetValue(self.photoTargetPath)
@@ -178,7 +182,7 @@ class PhotoCtrl(wx.App):
 
     def onSetTagListFile(self,event):
         self.tagStatus = {} # {photoIdx : {btnID:true, btnID:false}} (reinitialize)
-        dialog = wx.FileDialog(None, "Choose a file", wildcard='*', style=wx.OPEN)
+        dialog = wx.FileDialog(None, "Choose a file", wildcard='*', style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.tagListPath = dialog.GetPath()
             self.tagListSettingTxt.SetValue(self.tagListPath)
@@ -196,6 +200,7 @@ class PhotoCtrl(wx.App):
         tagBtnIdx = 0
         # Extract tag list from file
         with open(self.tagListPath, "r") as f:
+            print '====== tag list ====='
             for tag in f:
                 tag = tag.replace("\n","").replace("\r","").strip()
                 if self.env is EnumEnv.WINDOWS:
@@ -208,6 +213,7 @@ class PhotoCtrl(wx.App):
                     # Append Btns to sizer
                     self.tagListSizer.Add(tagBtn, 0, wx.ALL, 5)
                     tagBtnIdx += 1
+            print '===================='
         # Append btns to panel
         self.tagController.Add(self.tagListSizer, 0, wx.ALL, 5)
         
@@ -239,16 +245,30 @@ class PhotoCtrl(wx.App):
         # elif PhotoCtrl == EnumPhotoCtrl.C_CL_WISE:
         #     print 'Rotate counter-clockwise'
         #     img.rotate(90, expand=True).save(filename)
-
-
+ 
         self.onView(filename)
+
+    def onTagPrevSetting(self):
+        print 'load previous photo tags setting'
+        if self.currentPhotoIdx == 0:
+            wx.MessageDialog(self.panel, style=wx.OK|wx.CENTRE, message=unicode("沒有上一張照片的設定")).ShowModal()
+        else:
+            for btnID, isBtnPress in self.tagStatus[self.currentPhotoIdx -1].items():
+                if btnID in self.btnIdTagNameMap:
+                    tagName = self.btnIdTagNameMap[btnID]
+                    # copy files
+                    self.copyFile(tagName, isBtnPress, btnID)
+            self.loadTagStatus()
 
     def onTagPhoto(self,event):
         btn = event.GetEventObject()
         tagName = btn.GetLabel()
-        isPress = btn.GetValue()
+        isBtnPress = btn.GetValue()
         btnID = btn.GetId()
+        self.copyFile(tagName, isBtnPress, btnID)
+        self.updatebtnIdTagNameMap(btnID, tagName)
 
+    def copyFile(self, tagName, isBtnPress, btnID):
         # Get the final target path for copy or delete
         finalTargetDir = os.path.join(self.photoTargetPath.encode('utf-8'),tagName.encode('utf-8'))
         sourceFile_fullpath = self.allPhotos[self.currentPhotoIdx]
@@ -261,27 +281,34 @@ class PhotoCtrl(wx.App):
             self.allPhotos[self.currentPhotoIdx] = self.allPhotos[self.currentPhotoIdx].decode('utf-8')
 
         if not os.path.exists(finalTargetDir) or not os.path.isdir(finalTargetDir):
-            print 'dir not exist, mkdir'    
+            print 'folder ' + tagName + ' not exist, mkdir'
             os.mkdir(finalTargetDir)
         # copy the file to target folder
-        if isPress is True:
-            print 'copy file to target folder'    
+        if isBtnPress is True:
+            print 'copy file ' + self.allPhotos[self.currentPhotoIdx] + ' to target folder ' + tagName
             shutil.copyfile(self.allPhotos[self.currentPhotoIdx], finalTargetPath)        
-            self.saveTagStatus(btnID,isPress)
+            self.saveTagStatus(btnID,isBtnPress)
         # delete target folder file
-        elif isPress is False:
+        elif isBtnPress is False:
             print 'delete target file'
             if os.path.exists(finalTargetPath):
                 os.remove(finalTargetPath)
-            self.saveTagStatus(btnID,isPress)
+            self.saveTagStatus(btnID,isBtnPress)
+
+    def updatebtnIdTagNameMap(self, btnID, tagName):
+        if not str(btnID) in self.btnIdTagNameMap:
+            self.btnIdTagNameMap[str(btnID)] = tagName
+
+        print 'btnIdTagNameMap: '
+        print self.btnIdTagNameMap
 
 
-    def saveTagStatus(self,btnID,isPress):
+    def saveTagStatus(self,btnID,isBtnPress):
         # initialize if have not set
         if self.currentPhotoIdx not in self.tagStatus:
             self.tagStatus[self.currentPhotoIdx] = {}
         # save status
-        self.tagStatus[self.currentPhotoIdx][str(btnID)] = isPress
+        self.tagStatus[self.currentPhotoIdx][str(btnID)] = isBtnPress
 
     def loadTagStatus(self):
         #Refresh all tag btn to non-press
@@ -291,8 +318,8 @@ class PhotoCtrl(wx.App):
         # only handle changed photo index
         if self.currentPhotoIdx in self.tagStatus:
             print self.tagStatus
-            for btnID, isPress in self.tagStatus[self.currentPhotoIdx].items():
-                self.tagListSizer.GetContainingWindow().FindWindowById(long(btnID)).SetValue(isPress)
+            for btnID, isBtnPress in self.tagStatus[self.currentPhotoIdx].items():
+                self.tagListSizer.GetContainingWindow().FindWindowById(long(btnID)).SetValue(isBtnPress)
 
         # Refresh layout
         self.panel.Refresh()
@@ -331,7 +358,6 @@ class PhotoCtrl(wx.App):
 
     def onKey(self,event):
         keyCode = event.GetKeyCode()
-        print keyCode
         if keyCode in (EnumKeyCode.ARROW_RIGHT, EnumKeyCode.ARROW_DOWN):
             # Next photo
             self.onPhotoChange(EnumPhotoCtrl.NEXT)
@@ -353,7 +379,7 @@ class PhotoCtrl(wx.App):
             self.targetPhotoTxt.SetValue(self.photoTargetPath)
 
             # tag list setting file
-            self.tagListPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/tagList測試檔案範例2')
+            self.tagListPath = unicode('/Users/Jordan/Dropbox/Projects/photoDistributor/test/tagList標籤清單檔案範例_MAC')
             self.tagListSettingTxt.SetValue(self.tagListPath)
             self.genTagBtns()    
  
