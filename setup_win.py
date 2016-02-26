@@ -1,4 +1,8 @@
-from distutils.core import setup
-import py2exe
 
-setup(console=["photoDistributor.py"])
+from setuptools import setup
+
+setup(
+    app=['photoDistributor.py'],
+    data_files=[('assets', ['assets/background.jpg'])],
+    setup_requires=['py2app'],
+)
