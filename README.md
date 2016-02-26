@@ -23,8 +23,14 @@ $ sudo pip install pillow
 
 ## Test & Dev
 
+#### MAC
 ```
-$ python photoDistributor.py
+$ python photoDistributor_MAC.py
+```
+
+#### WINDOWS
+```
+$ python photoDistributor_WIN.py
 ```
 
 ## Build executable file
